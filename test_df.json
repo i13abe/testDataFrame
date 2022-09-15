@@ -1,0 +1,13 @@
+{
+  "num_rows": 100,
+  "df_confs": {
+    "shsg": {
+      "nan_rate": 0.0,
+      "dtype": "str",
+      "unique": "Random number",
+      "digits": 8,
+      "max": 12,
+      "min": 0
+    }
+  }
+}
