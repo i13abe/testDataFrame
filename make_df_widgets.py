@@ -258,7 +258,7 @@ class DFWidgets(object):
             df_dict, df = self.make_df(self.headers, self.features)
             with open(f'{df_name.value}.json', mode='w') as f:
                 json.dump(df_dict, f, indent=2, ensure_ascii=False)
-            df.to_csv(f'{df_name.value}.csv', index=False)
+            df.to_pickle(f'{df_name.value}.pkl')
                 
         make_df_button.on_click(on_click_make_df)
         header.children += (make_df_button, df_name, num_rows)
@@ -340,7 +340,7 @@ class DFWidgets(object):
         
     
     def make_features(self, features, add_button, lim_w):
-        features = [iw.Box(features[idx:idx + lim_w]) for idx in range(0,len(features), lim_w)] # lim_w個ごとに分割
+        features = [iw.Box(features[idx:idx + lim_w]) for idx in range(0,len(features), lim_w)] # divide by lim_w
         if len(features[-1].children) == 4:
             features.append(iw.Box([add_button]))
         else:
