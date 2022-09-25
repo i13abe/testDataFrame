@@ -24,4 +24,6 @@ $ pip install -r requirements.txt
 $ jupyter lab
 ```
 
-2. Run all
+2. open test_dataframe.ipynb
+
+3. Run all on notebook
