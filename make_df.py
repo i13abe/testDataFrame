@@ -52,8 +52,9 @@ def make_df_from_config(df_config):
             date = np.tile(date.values, num_rows//len(date)+1)
             features = date[:num_rows]
         
+        df[feature_name] = features
+
         if nan_rate!=0:
             nan_idx = random.sample(range(num_rows), round(num_rows*nan_rate))
-            features[nan_idx] = np.nan
-        df[feature_name] = features
+            features[feature_name][nan_idx] = np.nan
     return df

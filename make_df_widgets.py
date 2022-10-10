@@ -4,6 +4,7 @@ import random
 import string
 import json
 import ipywidgets as iw
+import gc
 
 from IPython.display import display
 from datetime import datetime as dt
@@ -115,7 +116,9 @@ def str_setting(feature):
     def on_value_change(change) -> None:
         if change['name'] == 'value':
             while len(feature.children)>=5:
-                pop_n_widgets(feature, -1)
+                w = pop_n_widgets(feature, -1)
+                del w
+                gc.collect()
             str_unique_setting(feature, change['new'])
     
     unique.observe(on_value_change, names='value')
@@ -292,11 +295,15 @@ class DFWidgets(object):
         def on_value_change(change) -> None:
             if change['name'] == 'value':
                 while len(feature.children)>=4:
-                    pop_n_widgets(feature, -1)
+                    w = pop_n_widgets(feature, -1)
+                    del w
+                    gc.collect()
                 dtype_setting(feature, change['new'])
                 
         def on_click_delete(clicked_button: iw.Button) -> None:
             self.features.remove(feature)
+            del feature
+            gc.collect()
             self.show_features()
 
         dtype.observe(on_value_change, names='value')
@@ -337,11 +344,10 @@ class DFWidgets(object):
         add_button.on_click(on_click)
         display(self.features_widgets)
         
-        
     
     def make_features(self, features, add_button, lim_w):
         features = [iw.Box(features[idx:idx + lim_w]) for idx in range(0,len(features), lim_w)] # divide by lim_w
-        if len(features[-1].children) == 4:
+        if len(features[-1].children) == lim_w:
             features.append(iw.Box([add_button]))
         else:
             features[-1].children += (add_button,)
