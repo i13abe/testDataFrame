@@ -302,7 +302,6 @@ class DFWidgets(object):
                 
         def on_click_delete(clicked_button: iw.Button) -> None:
             self.features.remove(feature)
-            del feature
             gc.collect()
             self.show_features()
 
