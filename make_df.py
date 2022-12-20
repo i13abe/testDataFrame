@@ -6,6 +6,13 @@ from datetime import datetime as dt
 
 
 def make_df_from_config(df_config):
+    """
+    Generating DataFrame with random values from config (Dict).
+    Args:
+        df_config (Dict) : config data
+    Returms:
+        df  (pd.DataFrame)
+    """
     num_rows = df_config['num_rows']
     df = pd.DataFrame()
     df_features = df_config['features']
@@ -58,3 +65,50 @@ def make_df_from_config(df_config):
             nan_idx = random.sample(range(num_rows), round(num_rows*nan_rate))
             features[feature_name][nan_idx] = np.nan
     return df
+
+
+def make_config_from_df(
+    df,
+):
+    """
+    Generate config from DataFrame.
+    Args:
+        df (pd.DataFrame)
+    Returns:
+        df_config (Dict) : config data
+    """
+
+    df_config = {}
+    df_config['df_name'] = 'test_df'
+    df_config['num_rows'] = len(df)
+    df_config['features'] = {}
+
+    for col in df.columns:
+        df_config['features'][col] = {}
+        df_config['features'][col]['Nan rate'] = df[col].isnull().sum()/len(df)
+        if 'int' in str(df[col].dtype):
+            df_config['features'][col]['Dtype'] = 'int'
+            df_config['features'][col]['Max'] = df[col].max()
+            df_config['features'][col]['Min'] = df[col].min()
+        elif 'float' in str(df[col].dtype):
+            if all(df[col].dropna().applymap(lambda x: x.is_integer())):
+                df_config['features'][col]['Dtype'] = 'int'
+            else:
+                df_config['features'][col]['Dtype'] = 'float'
+            df_config['features'][col]['Max'] = df[col].max()
+            df_config['features'][col]['Min'] = df[col].min()
+        else:
+            df_config['features'][col]['Dtype'] = 'str'
+            df[col].astype(str)
+            if all(df[col].str.isdigit()):
+                df_config['features'][col]['Unique'] = 'Random number'
+                df_config['features'][col]['Max'] = df[col].astype(float).max()
+                df_config['features'][col]['Min'] = df[col].astype(float).min()
+                df_config['features'][col]['Char digits'] = df[col].astype(str).apply(len).max()
+            elif df[col].nunique() <= 30:
+                df_config['features'][col]['Unique'] = 'yourself'
+                df_config['features'][col]['Unique list'] = ','.join(df[col].unique())
+            else:
+                df_config['features'][col]['Unique'] = 'Random letter'
+                df_config['features'][col]['Char digits'] = df[col].astype(str).apply(len).max()
+    return df_config
