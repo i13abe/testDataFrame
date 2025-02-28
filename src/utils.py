@@ -88,7 +88,7 @@ def make_df_from_config(dict_config_for_df):
                 features.append(random_int)
             features = np.array(features)
             if nan_rate!=0:
-                print(f'On the int column "{features}", np.nan are detected. This column is converted to float.')
+                print(f'On the int column "{feature_name}", np.nan are detected. This column is converted to float.')
                 features = features.astype(float)
         elif dtype=='float':
             for i in range(num_rows):
