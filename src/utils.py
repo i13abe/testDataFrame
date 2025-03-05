@@ -11,8 +11,8 @@ def upload_file(input_data, **kwargs):
     This is uploader for generating DataFrame.
     input data is expected json path, csv path, pickle path, or DataFrame.
     Args:
-        input_data (Union[str, pd.DataFrame]) : json path, csv path, pickle path or DataFrame
-        kwargs (Dict) : additional arguments for read csv or read_pickle
+        input_data (Union[str, pd.DataFrame]) : json path, csv path, pickle path, excel path, parquet path or DataFrame
+        kwargs (Dict) : additional arguments for pandas read func
     Returns:
         df_dict (Dict) : Config data for generating GUI
     """
@@ -26,6 +26,10 @@ def upload_file(input_data, **kwargs):
                 input_data = pd.read_csv(input_data, **kwargs)
             elif (exe == 'pickle')|(exe == 'pkl'):
                 input_data = pd.read_pickle(input_data, **kwargs)
+            elif (exe == 'xlsx')|(exe == 'xls'):
+                input_data = pd.read_excel(input_data, **kwargs)
+            elif (exe == 'parquet'):
+                input_data = pd.read_parquet(input_data, **kwargs)
             else:
                 df_dict = {}
         if isinstance(input_data, pd.DataFrame):

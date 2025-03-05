@@ -9,58 +9,7 @@ import gc
 from IPython.display import display
 from datetime import datetime as dt
 from .utils import make_df_from_config
-
-
-def is_not_empty(widget, init_layout=iw.Layout()):
-    """
-    Check not empty of widget parameter.
-    If not empty return True
-    """
-    widget.layout = init_layout
-    if (widget.value == "")|(widget.value is None):
-        print(f"'{widget.description}' is requierd. Not empty.")
-        widget.layout = iw.Layout(border='2px solid #FF6347') # color to red on empty box
-        return False
-    return True
-
-
-def min_max_check(min_widget, max_widget, init_layout=iw.Layout()):
-    """
-    Check min<=max of int or float feature.
-    If min<=max, return True.
-    """
-    max_widget.layout = init_layout
-    min_widget.layout = init_layout
-    if float(min_widget.value) > float(max_widget.value):
-        print("min must be <=max")
-        min_widget.layout = iw.Layout(border='2px solid #FF6347', margin="2px")
-        max_widget.layout = iw.Layout(border='2px solid #FF6347', margin="2px")
-        return False
-    return True
-
-
-def parameter_check(headers, features):
-    """
-    Check the parameter of widgets.
-    <Check list>
-    - is empty or not. If not empty, return True
-    - min <= max or not. If min<=max, return True
-    If all checks of list are True, return True
-    """
-    flag = True
-    # header check
-    for i in [1, 2]:
-        flag &= is_not_empty(headers.children[i])
-
-    # feature check
-    for feature in features:
-        flag &= is_not_empty(feature.children[0].children[0], iw.Layout(width="90%")) # for FeatName
-        for feature_detail in feature.children[1:]:
-            flag &= is_not_empty(feature_detail)
-        dtype = feature.children[2].value
-        if (dtype=="int")|(dtype=="float"):
-            flag &= min_max_check(feature.children[4], feature.children[3])
-    return flag
+from .widget_checker import parameter_check
 
 
 def pop_n_widgets(box, n):
@@ -283,6 +232,8 @@ class DFWidgets(object):
         self.lim_w = lim_w # limit of horizontal widgets to show on notebook
         
         self.features_widgets = iw.VBox()
+
+        self.add_button = self.make_add_button()
         
     
     def make_df_widgets(self, dict_config_for_df={}):
@@ -291,6 +242,9 @@ class DFWidgets(object):
 
         Args:
             dict_config_for_df (Dict[str, str]): config to generate widgets
+        Returns:
+            headers (iw.VBox()): heaqder widgets
+            feature (iw.VBox()): feature widgets
         """
         headers = []
         features = []
@@ -313,6 +267,8 @@ class DFWidgets(object):
         Args:
             df_name (str): DataFrame name. Default to None.
             num_rows (int): The number of rows. Defaults to None.
+        Returns:
+            header (iw.VBox()): heaqder widgets
         """
         header = iw.VBox()
         make_df_button = iw.Button(description='make DF')
@@ -351,6 +307,8 @@ class DFWidgets(object):
     def make_feature_widgets(self):
         """
         Generate an initial feature widgets
+        Returns:
+            feature (iw.VBox()): feature widgets
         """
         feature = iw.VBox(layout=iw.Layout(border='1px solid #C8C8C8'))
         
@@ -385,7 +343,8 @@ class DFWidgets(object):
         def on_click_delete(clicked_button: iw.Button) -> None:
             self.features.remove(feature)
             gc.collect()
-            self.show_features()
+            features = self.make_features(self.features, self.lim_w)
+            self.features_widgets.children = tuple(features)
 
         dtype.observe(on_value_change, names='value')
         delete_button.on_click(on_click_delete)
@@ -401,6 +360,8 @@ class DFWidgets(object):
         Args:
             features (List[iw.VBox]) : List of feature widgets
             dict_config_for_df (Dict[str, str]) : Parameter of features
+        Returns:
+            features (iw.VBox()): features set the parameters
         """
         for feature_widget, feature_name in zip(features, dict_config_for_df.keys()):
             feature_widget.children[0].children[0].value = feature_name # for Feat Name
@@ -438,39 +399,54 @@ class DFWidgets(object):
         """
         show features widgets
         """
-        add_button = iw.Button(description='+')
-        features = self.make_features(self.features, add_button, self.lim_w)
-    
+        features = self.make_features(self.features, self.lim_w)
         self.features_widgets.children = tuple(features)
-        
+        display(self.features_widgets)
+    
+
+    def make_add_button(self):
+        """
+        Make widgets of add button
+        Returns:
+            add_button (iw.Button())
+        """
+        add_button = iw.Button(description='+')
         def on_click(clicked_button: iw.Button) -> None:
             self.features.append(self.make_feature_widgets())
-            features = self.make_features(self.features, add_button, self.lim_w)
+            features = self.make_features(self.features, self.lim_w)
             self.features_widgets.children = tuple(features)
 
         add_button.on_click(on_click)
-        display(self.features_widgets)
-        
-    
-    def make_features(self, features, add_button, lim_w):
+        return add_button
+
+
+    def make_features(self, features, lim_w):
         """
         Make widgets of features to show on notebook.
         Args:
             features (List[iw.VBox()]): List of feature widgets
-            add_button (iw.Button()): The button widget for adding a new feature.
             lim_w (int): Limit of horizontal widgets to show on notebook.
+        Returns:
+            featreus (iw.Box()): features widgets reconstructed to show on notebook
         """
         features = [iw.Box(features[idx:idx + lim_w]) for idx in range(0,len(features), lim_w)] # divide by lim_w
-        if len(features[-1].children) == lim_w:
-            features.append(iw.Box([add_button]))
+        if len(features)==0:
+            features = [iw.Box([self.add_button])]
+        elif len(features[-1].children) == lim_w:
+            features.append(iw.Box([self.add_button]))
         else:
-            features[-1].children += (add_button,)
+            features[-1].children += (self.add_button,)
         return features
 
     
     def get_config_to_make_df(self, headers, features):
         """
         Return a dict config from specified parameter of wigets
+        Args:
+            headers (iw.VBox()): heaqder widgets
+            feature (iw.VBox()): feature widgets
+        Returns:
+            dict_config_for_df (dict[str]): information to make df
         """
         dict_config_for_df = {
             'df_name':headers.children[1].value,
@@ -489,5 +465,9 @@ class DFWidgets(object):
     def make_df(self, dict_config_for_df):
         """
         Make DataFrame from specified parameter
+        Args:
+            dict_config_for_df (dict[str]): information to make df. get from get_config_to_make_df()
+        Returns:
+            (pd.DataFrame): dataframe by dict_config_for_df
         """
         return make_df_from_config(dict_config_for_df)
